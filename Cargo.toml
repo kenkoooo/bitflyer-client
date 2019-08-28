@@ -13,3 +13,4 @@ reqwest = "0.9"
 websocket = "0.23"
 ctrlc = "3.1"
 rusqlite = "0.20"
+ws = { version = "0.9", features = ["ssl"] }
