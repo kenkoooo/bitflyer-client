@@ -23,3 +23,10 @@ pub struct ExchangeHistory {
     pub buy_child_order_acceptance_id: String,
     pub sell_child_order_acceptance_id: String,
 }
+
+#[derive(Deserialize, Debug)]
+#[serde(untagged)]
+pub enum AsyncResponse {
+    Board(Board),
+    Executions(Vec<ExchangeHistory>),
+}
