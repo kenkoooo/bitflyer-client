@@ -16,16 +16,10 @@ pub struct BoardOrder {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ExchangeHistory {
     pub id: i64,
-    pub side: ExchangeSide,
+    pub side: String,
     pub price: f64,
     pub size: f64,
     pub exec_date: String,
     pub buy_child_order_acceptance_id: String,
     pub sell_child_order_acceptance_id: String,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub enum ExchangeSide {
-    BUY,
-    SELL,
 }

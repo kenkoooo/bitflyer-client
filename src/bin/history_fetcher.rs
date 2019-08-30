@@ -6,9 +6,9 @@ use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
-    assert!(args.len() >= 2);
+    let db_filepath = args.get(1).expect("Specify .db filepath.");
 
-    let conn = Connection::open(&args[1])?;
+    let mut conn = Connection::open(db_filepath)?;
     conn.execute(
         "CREATE TABLE IF NOT EXISTS bit_history (
              id INTEGER PRIMARY KEY,
@@ -17,22 +17,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         NO_PARAMS,
     )?;
 
-    let mut statement = conn.prepare("SELECT id FROM bit_history ORDER BY id LIMIT 1")?;
-    let mut current_minimum = statement
-        .query_map(NO_PARAMS, |row| row.get::<_, i64>(0))?
-        .flat_map(|row| row)
-        .min();
+    let mut current_minimum =
+        conn.query_row("SELECT MIN(id) FROM bit_history;", NO_PARAMS, |row| {
+            row.get(0)
+        })?;
 
     let client = HttpBitFlyerClient::default();
-    for _ in 0..3 {
+    loop {
         let history = client.fetch_history(current_minimum)?;
+        let tx = conn.transaction()?;
         for history in history.iter() {
             let json = serde_json::to_string(history)?;
-            conn.execute(
+            tx.execute(
                 "INSERT INTO bit_history (id, json) values (?1, ?2)",
                 &[&history.id.to_string(), &json],
             )?;
         }
+        tx.commit()?;
 
         let min = history.into_iter().map(|history| history.id).min().unwrap();
         current_minimum = Some(min - 1);

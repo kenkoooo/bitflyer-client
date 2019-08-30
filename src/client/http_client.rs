@@ -1,7 +1,8 @@
+use crate::error::Error;
 use crate::Result;
 use crate::{Board, ExchangeHistory};
-
 use reqwest;
+use reqwest::header::ACCEPT_ENCODING;
 use serde::de::DeserializeOwned;
 
 const BASE_URL: &str = "https://api.bitflyer.com";
@@ -20,7 +21,12 @@ impl Default for HttpBitFlyerClient {
 
 impl HttpBitFlyerClient {
     fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
-        let result = self.client.get(url).send()?.json()?;
+        let mut result = self
+            .client
+            .get(url)
+            .header(ACCEPT_ENCODING, "gzip")
+            .send()?
+            .json()?;
         Ok(result)
     }
 
