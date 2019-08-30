@@ -21,12 +21,13 @@ impl Default for HttpBitFlyerClient {
 
 impl HttpBitFlyerClient {
     fn get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
-        let mut result = self
+        let content = self
             .client
             .get(url)
             .header(ACCEPT_ENCODING, "gzip")
             .send()?
-            .json()?;
+            .text()?;
+        let result = serde_json::from_str(&content).map_err(|e| Error::parse_error(e, &content))?;
         Ok(result)
     }
 

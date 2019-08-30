@@ -6,10 +6,16 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 pub struct Error(ErrorKind);
 
 #[derive(Debug)]
-pub enum ErrorKind {
+pub(crate) enum ErrorKind {
     IO(reqwest::Error),
-    Parse(serde_json::Error),
+    Parse(serde_json::Error, String),
     Custom(Box<std::error::Error + Send + Sync>),
+}
+
+impl Error {
+    pub(crate) fn parse_error(err: serde_json::Error, content: &str) -> Self {
+        Self(ErrorKind::Parse(err, content.to_string()))
+    }
 }
 
 impl From<reqwest::Error> for Error {
@@ -20,7 +26,7 @@ impl From<reqwest::Error> for Error {
 
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Error {
-        Error(ErrorKind::Parse(err))
+        Error(ErrorKind::Parse(err, String::new()))
     }
 }
 

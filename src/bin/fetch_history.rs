@@ -17,14 +17,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         NO_PARAMS,
     )?;
 
-    let mut current_minimum =
+    let mut current_minimum_id =
         conn.query_row("SELECT MIN(id) FROM bit_history;", NO_PARAMS, |row| {
             row.get(0)
         })?;
 
     let client = HttpBitFlyerClient::default();
     loop {
-        let history = client.fetch_history(current_minimum)?;
+        let history = client.fetch_history(current_minimum_id)?;
         let tx = conn.transaction()?;
         for history in history.iter() {
             let json = serde_json::to_string(history)?;
@@ -36,9 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         tx.commit()?;
 
         let min = history.into_iter().map(|history| history.id).min().unwrap();
-        current_minimum = Some(min - 1);
-        eprintln!("{:?}", current_minimum);
+        current_minimum_id = Some(min - 1);
+        eprintln!("{:?}", current_minimum_id);
     }
-
-    Ok(())
 }
